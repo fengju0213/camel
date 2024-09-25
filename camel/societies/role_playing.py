@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
+import logging
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 from camel.agents import (
@@ -26,6 +27,9 @@ from camel.models import BaseModelBackend
 from camel.prompts import TextPrompt
 from camel.responses import ChatAgentResponse
 from camel.types import RoleType, TaskType
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 class RolePlaying:
@@ -97,6 +101,14 @@ class RolePlaying:
         extend_task_specify_meta_dict: Optional[Dict] = None,
         output_language: Optional[str] = None,
     ) -> None:
+        if model is not None:
+            logger.warning(
+                "The provided model will override the model settings in "
+                "all agents, including any configurations passed "
+                "through assistant_agent_kwargs, user_agent_kwargs, and "
+                "other agent-specific kwargs."
+            )
+
         self.with_task_specify = with_task_specify
         self.with_task_planner = with_task_planner
         self.with_critic_in_the_loop = with_critic_in_the_loop
@@ -478,32 +490,56 @@ class RolePlaying:
         user_response = self.user_agent.step(assistant_msg)
         if user_response.terminated or user_response.msgs is None:
             return (
-                ChatAgentResponse([], False, {}),
+                ChatAgentResponse(msgs=[], terminated=False, info={}),
                 ChatAgentResponse(
-                    [], user_response.terminated, user_response.info
+                    msgs=[],
+                    terminated=user_response.terminated,
+                    info=user_response.info,
                 ),
             )
         user_msg = self._reduce_message_options(user_response.msgs)
-        self.user_agent.record_message(user_msg)
+
+        # To prevent recording the same memory more than once (once in chat
+        # step and once in role play), and the model generates only one
+        # response when multi-response support is enabled.
+        if (
+            'n' in self.user_agent.model_config_dict.keys()
+            and self.user_agent.model_config_dict['n'] > 1
+        ):
+            self.user_agent.record_message(user_msg)
 
         assistant_response = self.assistant_agent.step(user_msg)
         if assistant_response.terminated or assistant_response.msgs is None:
             return (
                 ChatAgentResponse(
-                    [], assistant_response.terminated, assistant_response.info
+                    msgs=[],
+                    terminated=assistant_response.terminated,
+                    info=assistant_response.info,
                 ),
-                ChatAgentResponse([user_msg], False, user_response.info),
+                ChatAgentResponse(
+                    msgs=[user_msg], terminated=False, info=user_response.info
+                ),
             )
         assistant_msg = self._reduce_message_options(assistant_response.msgs)
-        self.assistant_agent.record_message(assistant_msg)
+
+        # To prevent recording the same memory more than once (once in chat
+        # step and once in role play), and the model generates only one
+        # response when multi-response support is enabled.
+        if (
+            'n' in self.assistant_agent.model_config_dict.keys()
+            and self.assistant_agent.model_config_dict['n'] > 1
+        ):
+            self.assistant_agent.record_message(assistant_msg)
 
         return (
             ChatAgentResponse(
-                [assistant_msg],
-                assistant_response.terminated,
-                assistant_response.info,
+                msgs=[assistant_msg],
+                terminated=assistant_response.terminated,
+                info=assistant_response.info,
             ),
             ChatAgentResponse(
-                [user_msg], user_response.terminated, user_response.info
+                msgs=[user_msg],
+                terminated=user_response.terminated,
+                info=user_response.info,
             ),
         )

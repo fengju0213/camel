@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "camel-ai"
-version = "0.1.5.7"
+version = "0.2.1a"
 authors = ["CAMEL-AI.org"]
 description = "Communicative Agents for AI Society Study"
 readme = "README.md"
@@ -27,23 +27,30 @@ repository = "https://github.com/camel-ai/camel"
 documentation = "https://docs.camel-ai.org"
 
 [tool.poetry.dependencies]
-python = ">=3.9.0,<3.12"
+python = ">=3.10.0,<3.12"
 numpy = "^1"
-openai = "^1.2.3"
+openai = "^1.45.0"
+groq = "^0.5.0"
+anthropic = "^0.29.0"
 tiktoken = "^0.7.0"
 colorama = "^0"
 jsonschema = "^4"
 protobuf = "^4"
 pathlib = "^1.0.1"
-anthropic = "^0.29.0"
 docstring-parser = "^0.15"
 pydantic = ">=1.9,<3"
+eval-type-backport = "0.2.0"
 curl_cffi = "0.6.2"
-pillow ="^10.2.0"
+jupyter_client = "^8.6.2"
+ipykernel = "^6.0.0"
+pandoc = "*"
+pillow = "^10.2.0"
 
 # model-platforms
 litellm = { version = "^1.38.1", optional = true }
 google-generativeai = { version = "^0.6.0", optional = true }
+mistralai = { version = "^1.0.0", optional = true }
+reka-api = { version = "^3.0.8", optional = true } 
 
 # huggingface-agent
 transformers = { version = "^4", optional = true }
@@ -60,22 +67,30 @@ beautifulsoup4 = { version = "^4", optional = true }
 docx2txt = { version = "^0.8", optional = true }
 PyMuPDF = { version = "^1.22.5", optional = true }
 wikipedia = { version = "^1", optional = true }
-duckduckgo-search = { version = "^6.1.0", optional = true }
-newspaper3k = {version = "^0.2.8", optional = true}
+duckduckgo-search = { version = "^6.2.12", optional = true }
+newspaper3k = { version = "^0.2.8", optional = true }
 wolframalpha = { version = "^5.0.0", optional = true }
 pyowm = { version = "^3.3.0", optional = true }
 googlemaps = { version = "^4.10.0", optional = true }
 requests_oauthlib = { version = "^1.3.1", optional = true }
 prance = { version = "^23.6.21.0", optional = true }
 openapi-spec-validator = { version = "^0.7.1", optional = true }
-unstructured = { extras = ["all-docs"], version = "^0.10.30", optional = true }
+unstructured = { extras = ["all-docs"], version = "^0.10", optional = true }
+firecrawl-py = { version = "^1.0.0", optional = true }
 slack-sdk = { version = "^3.27.2", optional = true }
 pydub = { version = "^0.25.1", optional = true }
 pygithub = { version = "^2.3.0", optional = true }
-imageio = {extras = ["pyav"], version = "^2.34.2"}
+imageio = { extras = ["pyav"], version = "^2.34.2" }
 pyTelegramBotAPI = { version = "^4.18.0", optional = true }
 "discord.py" = { version = "^2.3.2", optional = true }
-docker = { version="^7.1.0", optional = true }
+docker = { version = "^7.1.0", optional = true }
+agentops = { version = "^0.3.6", optional = true }
+azure-storage-blob = { version = "^12.21.0", optional = true }
+google-cloud-storage = { version = "^2.18.0", optional = true }
+botocore = { version = "^1.35.3", optional = true }
+nltk = { version = "3.8.1", optional = true }
+praw = { version = "^7.7.1", optional = true }
+textblob = { version = "^0.18.0.post0", optional = true }
 
 # encoders
 sentence-transformers = { version = "^3.0.1", optional = true }
@@ -83,10 +98,10 @@ sentence-transformers = { version = "^3.0.1", optional = true }
 # vector-databases
 qdrant-client = { version = "^1.9.0", optional = true }
 pymilvus = { version = "^2.4.0", optional = true }
-milvus-lite = { version = "^2.4.0, <=2.4.7", optional = true }
 
 # graph-storages
 neo4j = { version = "^5.18.0", optional = true }
+nebula3-python = { version = "3.8.2", optional = true }
 
 # key-value-storages
 redis = { version = "^5.0.6", optional = true }
@@ -96,9 +111,9 @@ rank-bm25 = { version = "^0.2.2", optional = true }
 cohere = { version = "^4.56", optional = true }
 
 # test
-pytest = { version = "^7", optional = true}
+pytest = { version = "^7", optional = true }
 pytest-asyncio = { version = "^0.23.0", optional = true }
-mock = { version = "^5", optional = true}
+mock = { version = "^5", optional = true }
 
 [tool.poetry.extras]
 test = ["pytest", "mock", "pytest-asyncio"]
@@ -106,6 +121,8 @@ test = ["pytest", "mock", "pytest-asyncio"]
 model-platforms = [
     "litellm",
     "google-generativeai",
+    "mistralai",
+    "reka-api",
 ]
 
 huggingface-agent = [
@@ -137,6 +154,8 @@ tools = [
     "prance",
     "openapi-spec-validator",
     "unstructured",
+    "firecrawl-py",
+    "nltk",
     "imageio",
     "pillow",
     "slack-sdk",
@@ -145,6 +164,10 @@ tools = [
     "pyTelegramBotAPI",
     "discord.py",
     "docker",
+    "jupyter_client",
+    "agentops",
+    "praw",
+    "textblob",
 ]
 
 vector-databases = [
@@ -154,10 +177,17 @@ vector-databases = [
 
 graph-storages = [
     "neo4j",
+    "nebula3-python",
 ]
 
 kv-stroages = [
     "redis",
+]
+
+object-storages = [
+    "azure-storage-blob",
+    "google-cloud-storage",
+    "botocore",
 ]
 
 retrievers = [
@@ -192,11 +222,17 @@ all = [
     "prance",
     "openapi-spec-validator",
     "unstructured",
+    "nltk",
+    "firecrawl-py",
     "imageio",
     "slack-sdk",
     "pydub",
     "pillow",
     "docker",
+    "jupyter_client",
+    "agentops",
+    "praw",
+    "textblob",
     # vector-database
     "qdrant-client",
     "pymilvus",
@@ -206,13 +242,20 @@ all = [
     "sentence-transformers",
     # graph-storages
     "neo4j",
+    "nebula3-python",
     # retrievers
     "rank-bm25",
     # model platforms
     "litellm",
+    "mistralai",
+    "google-generativeai",
+    "reka-api",
     # kv-storages
     "redis",
-    "google-generativeai",
+    # object-storages
+    "azure-storage-blob",
+    "google-cloud-storage",
+    "botocore",
 ]
 
 [tool.poetry.group.dev]
@@ -241,10 +284,11 @@ types-requests = "^2"
 [tool.poetry.group.docs]
 optional = true
 [tool.poetry.group.docs.dependencies]
-sphinx = "^6"
+sphinx = "^7"
 sphinx_book_theme = "*"
-recommonmark = "*"
 docutils = "<0.20.0"
+myst-parser = "*"
+nbsphinx = "*"
 
 [tool.ruff]
 line-length = 79
@@ -298,6 +342,8 @@ module = [
     "tiktoken",
     "openai",
     "openai.error",
+    "groq",
+    "anthropic",
     "pytest",
     "_pytest.config",
     "_pytest.nodes",
@@ -325,6 +371,8 @@ module = [
     "fitz",
     "qdrant_client.*",
     "unstructured.*",
+    "nltk",
+    "firecrawl",
     "imageio",
     "rank_bm25",
     "cohere",
@@ -339,6 +387,12 @@ module = [
     "discord.py",
     "docker.*",
     "google.*",
-    "google-generativeai",
+    "google_generativeai",
+    "mistralai",
+    "reka-api",
+    "agentops",
+    "botocore.*",
+    "praw",
+    "textblob",
 ]
 ignore_missing_imports = true

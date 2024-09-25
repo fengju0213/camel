@@ -36,6 +36,7 @@ class OpenAIModel(BaseModelBackend):
         model_config_dict: Dict[str, Any],
         api_key: Optional[str] = None,
         url: Optional[str] = None,
+        token_counter: Optional[BaseTokenCounter] = None,
     ) -> None:
         r"""Constructor for OpenAI backend.
 
@@ -48,8 +49,13 @@ class OpenAIModel(BaseModelBackend):
                 OpenAI service. (default: :obj:`None`)
             url (Optional[str]): The url to the OpenAI service. (default:
                 :obj:`None`)
+            token_counter (Optional[BaseTokenCounter]): Token counter to use
+                for the model. If not provided, `OpenAITokenCounter` will
+                be used.
         """
-        super().__init__(model_type, model_config_dict, api_key, url)
+        super().__init__(
+            model_type, model_config_dict, api_key, url, token_counter
+        )
         self._url = url or os.environ.get("OPENAI_API_BASE_URL")
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self._client = OpenAI(
@@ -58,7 +64,6 @@ class OpenAIModel(BaseModelBackend):
             base_url=self._url,
             api_key=self._api_key,
         )
-        self._token_counter: Optional[BaseTokenCounter] = None
 
     @property
     def token_counter(self) -> BaseTokenCounter:
@@ -88,6 +93,22 @@ class OpenAIModel(BaseModelBackend):
                 `ChatCompletion` in the non-stream mode, or
                 `Stream[ChatCompletionChunk]` in the stream mode.
         """
+        # o1-preview and o1-mini have Beta limitations
+        # reference: https://platform.openai.com/docs/guides/reasoning
+        if self.model_type in [ModelType.O1_MINI, ModelType.O1_PREVIEW]:
+            # Remove system message that is not supported in o1 model.
+            messages = [msg for msg in messages if msg.get("role") != "system"]
+
+            # Remove unsupported parameters and reset the fixed parameters
+            del self.model_config_dict["stream"]
+            del self.model_config_dict["tools"]
+            del self.model_config_dict["tool_choice"]
+            self.model_config_dict["temperature"] = 1.0
+            self.model_config_dict["top_p"] = 1.0
+            self.model_config_dict["n"] = 1.0
+            self.model_config_dict["presence_penalty"] = 0.0
+            self.model_config_dict["frequency_penalty"] = 0.0
+
         response = self._client.chat.completions.create(
             messages=messages,
             model=self.model_type.value,

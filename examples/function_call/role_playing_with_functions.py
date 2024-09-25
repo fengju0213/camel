@@ -21,11 +21,8 @@ from camel.configs import ChatGPTConfig
 from camel.models import ModelFactory
 from camel.societies import RolePlaying
 from camel.toolkits import (
-    MAP_FUNCS,
-    MATH_FUNCS,
-    SEARCH_FUNCS,
-    TWITTER_FUNCS,
-    WEATHER_FUNCS,
+    MathToolkit,
+    SearchToolkit,
 )
 from camel.types import ModelPlatformType, ModelType
 from camel.utils import print_text_animated
@@ -33,7 +30,7 @@ from camel.utils import print_text_animated
 
 def main(
     model_platform=ModelPlatformType.OPENAI,
-    model_type=ModelType.GPT_3_5_TURBO,
+    model_type=ModelType.GPT_4O_MINI,
     chat_turn_limit=10,
 ) -> None:
     task_prompt = (
@@ -46,15 +43,11 @@ def main(
 
     user_model_config = ChatGPTConfig(temperature=0.0)
 
-    function_list = [
-        *MATH_FUNCS,
-        *SEARCH_FUNCS,
-        *WEATHER_FUNCS,
-        *MAP_FUNCS,
-        *TWITTER_FUNCS,
+    tools_list = [
+        *MathToolkit().get_tools(),
+        *SearchToolkit().get_tools(),
     ]
     assistant_model_config = ChatGPTConfig(
-        tools=function_list,
         temperature=0.0,
     )
 
@@ -65,15 +58,15 @@ def main(
             model=ModelFactory.create(
                 model_platform=model_platform,
                 model_type=model_type,
-                model_config_dict=assistant_model_config.__dict__,
+                model_config_dict=assistant_model_config.as_dict(),
             ),
-            tools=function_list,
+            tools=tools_list,
         ),
         user_agent_kwargs=dict(
             model=ModelFactory.create(
                 model_platform=model_platform,
                 model_type=model_type,
-                model_config_dict=user_model_config.__dict__,
+                model_config_dict=user_model_config.as_dict(),
             ),
         ),
         task_prompt=task_prompt,
@@ -129,8 +122,9 @@ def main(
         # Print output from the assistant, including any function
         # execution information
         print_text_animated(Fore.GREEN + "AI Assistant:")
-        tool_calls: List[FunctionCallingRecord] = assistant_response.info[
-            'tool_calls'
+        tool_calls: List[FunctionCallingRecord] = [
+            FunctionCallingRecord(**call.as_dict())
+            for call in assistant_response.info['tool_calls']
         ]
         for func_record in tool_calls:
             print_text_animated(f"{func_record}")

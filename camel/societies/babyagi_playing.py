@@ -243,9 +243,6 @@ class BabyAGI:
 
         assistant_response = self.assistant_agent.step(assistant_msg_msg)
         assistant_msg = assistant_response.msgs[0]
-        self.assistant_agent.record_message(assistant_msg)
-        self.task_creation_agent.record_message(assistant_msg)
-        self.task_prioritization_agent.record_message(assistant_msg)
 
         self.solved_subtasks.append(task_name)
         past_tasks = self.solved_subtasks + list(self.subtasks)
@@ -270,10 +267,12 @@ class BabyAGI:
                 "All tasks are solved"
             )
             return ChatAgentResponse(
-                [assistant_msg], terminated, assistant_response.info
+                msgs=[assistant_msg],
+                terminated=terminated,
+                info=assistant_response.info,
             )
         return ChatAgentResponse(
-            [assistant_msg],
-            assistant_response.terminated,
-            assistant_response.info,
+            msgs=[assistant_msg],
+            terminated=assistant_response.terminated,
+            info=assistant_response.info,
         )

@@ -27,14 +27,15 @@ from camel.utils import OpenAITokenCounter
     [
         ModelType.GPT_3_5_TURBO,
         ModelType.GPT_4,
-        ModelType.GPT_4_32K,
         ModelType.GPT_4_TURBO,
         ModelType.GPT_4O,
         ModelType.GPT_4O_MINI,
+        ModelType.O1_PREVIEW,
+        ModelType.O1_MINI,
     ],
 )
 def test_openai_model(model_type):
-    model_config_dict = ChatGPTConfig().__dict__
+    model_config_dict = ChatGPTConfig().as_dict()
     model = OpenAIModel(model_type, model_config_dict)
     assert model.model_type == model_type
     assert model.model_config_dict == model_config_dict
@@ -50,7 +51,7 @@ def test_openai_model_unexpected_argument():
         model_path="vicuna-7b-v1.5",
         server_url="http://localhost:8000/v1",
     )
-    model_config_dict = model_config.__dict__
+    model_config_dict = model_config.as_dict()
 
     with pytest.raises(
         ValueError,
